@@ -1,0 +1,895 @@
+{
+  "info": {
+    "_postman_id": "9cb25012-3347-4d39-83ed-b619478f32c5",
+    "name": "Hub de Leitura - Catálogo de Livros",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "47385909",
+    "_collection_link": "https://go.postman.co/collection/47385909-9cb25012-3347-4d39-83ed-b619478f32c5?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "00 - Login Admin",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const res = pm.response.json();\r",
+              "\r",
+              "pm.test(\"Status code é 200\", () => {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Usuário logado é administrador\", () => {\r",
+              "    pm.expect(res.isAdmin).to.eql(true);\r",
+              "    pm.expect(res.email).to.eql(\"admin@biblioteca.com\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Token retornado no formato Bearer\", () => {\r",
+              "    pm.expect(res.token).to.be.a(\"string\");\r",
+              "    pm.expect(res.token).to.include(\"Bearer \");\r",
+              "});\r",
+              "\r",
+              "// Salva o token para ser usado nas próximas requisições\r",
+              "pm.collectionVariables.set(\"tokenAdmin\", res.token);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "  {\r\n    \"email\": \"admin@biblioteca.com\",\r\n    \"password\": \"admin123\"\r\n  }",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "01 - Login Usuário Comum",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const res = pm.response.json();\r",
+              "\r",
+              "pm.test(\"Status code é 200\", () => {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Usuário logado NÃO é administrador\", () => {\r",
+              "    pm.expect(res.isAdmin).to.eql(false);\r",
+              "    pm.expect(res.email).to.eql(\"usuario@teste.com\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Token retornado no formato Bearer\", () => {\r",
+              "    pm.expect(res.token).to.be.a(\"string\");\r",
+              "    pm.expect(res.token).to.include(\"Bearer \");\r",
+              "});\r",
+              "\r",
+              "// Salva o token do usuário comum para o cenário negativo de permissão\r",
+              "pm.collectionVariables.set(\"tokenUser\", res.token);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": " {\r\n    \"email\": \"usuario@teste.com\",\r\n    \"password\": \"user123\"\r\n  }",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "CT01 - Listar livros",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const res = pm.response.json();\r",
+              "\r",
+              "pm.test(\"Status code é 200\", () => {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Resposta contém a lista de livros\", () => {\r",
+              "    pm.expect(res.books).to.be.an(\"array\");\r",
+              "    pm.expect(res.books.length).to.be.above(0);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Cada livro possui título e autor\", () => {\r",
+              "    res.books.forEach(livro => {\r",
+              "        pm.expect(livro).to.have.property(\"title\");\r",
+              "        pm.expect(livro).to.have.property(\"author\");\r",
+              "    });\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Paginação retornada corretamente\", () => {\r",
+              "    pm.expect(res.pagination.total).to.be.above(0);\r",
+              "    pm.expect(res.pagination.showing).to.eql(res.books.length);\r",
+              "});\r",
+              "\r",
+              "// Guarda um livro existente para o cenário de duplicidade (CT10)\r",
+              "pm.collectionVariables.set(\"existingTitle\", res.books[0].title);\r",
+              "pm.collectionVariables.set(\"existingAuthor\", res.books[0].author);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/books",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "books"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "CT02 - Cadastrar livro válido",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Gera um título único a cada execução para evitar a regra de duplicidade\r",
+              "const titulo = \"Livro QA \" + Date.now();\r",
+              "pm.collectionVariables.set(\"bookTitle\", titulo);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const res = pm.response.json();\r",
+              "const tituloEnviado = pm.collectionVariables.get(\"bookTitle\");\r",
+              "\r",
+              "pm.test(\"Status code é 201\", () => {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Mensagem de sucesso retornada\", () => {\r",
+              "    pm.expect(res.message).to.eql(\"Livro criado com sucesso.\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Livro criado com os dados enviados\", () => {\r",
+              "    pm.expect(res.book.title).to.eql(tituloEnviado);\r",
+              "    pm.expect(res.book.author).to.eql(\"Laura Ajala QA\");\r",
+              "    pm.expect(res.book.category).to.eql(\"Tecnologia\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Exemplares disponíveis iguais ao total cadastrado\", () => {\r",
+              "    pm.expect(res.book.total_copies).to.eql(3);\r",
+              "    pm.expect(res.book.available_copies).to.eql(3);\r",
+              "});\r",
+              "\r",
+              "// Salva o ID para os próximos cenários (consultar, atualizar e excluir)\r",
+              "pm.collectionVariables.set(\"bookId\", res.book.id);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "{{tokenAdmin}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"title\": \"{{bookTitle}}\",\r\n  \"author\": \"Laura Ajala QA\",\r\n  \"category\": \"Tecnologia\",\r\n  \"description\": \"Livro criado via Postman para testes de API\",\r\n  \"total_copies\": 3\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/books",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "books"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "CT03 - Buscar livro por ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const res = pm.response.json();\r",
+              "const idEsperado = Number(pm.collectionVariables.get(\"bookId\"));\r",
+              "const tituloEsperado = pm.collectionVariables.get(\"bookTitle\");\r",
+              "\r",
+              "pm.test(\"Status code é 200\", () => {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Livro retornado é o mesmo que foi cadastrado\", () => {\r",
+              "    pm.expect(res.book.id).to.eql(idEsperado);\r",
+              "    pm.expect(res.book.title).to.eql(tituloEsperado);\r",
+              "    pm.expect(res.book.author).to.eql(\"Laura Ajala QA\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Livro está disponível para reserva\", () => {\r",
+              "    pm.expect(res.availability.total_copies).to.eql(3);\r",
+              "    pm.expect(res.availability.available_copies).to.eql(3);\r",
+              "    pm.expect(res.availability.isAvailable).to.eql(true);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/books/{{bookId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "books",
+            "{{bookId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "CT04 - Atualizar livro",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const res = pm.response.json();\r",
+              "const idEsperado = Number(pm.collectionVariables.get(\"bookId\"));\r",
+              "const tituloOriginal = pm.collectionVariables.get(\"bookTitle\");\r",
+              "\r",
+              "pm.test(\"Status code é 200\", () => {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Mensagem de atualização retornada\", () => {\r",
+              "    pm.expect(res.message).to.eql(\"Livro atualizado com sucesso.\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Atualização aplicada ao livro correto\", () => {\r",
+              "    pm.expect(res.bookId).to.eql(idEsperado);\r",
+              "    pm.expect(res.previousTitle).to.eql(tituloOriginal);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Campos alterados foram registrados\", () => {\r",
+              "    pm.expect(res.updatedFields).to.include.members([\"title\", \"category\", \"description\"]);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "{{tokenAdmin}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"title\": \"{{bookTitle}} - Editado\",\r\n  \"author\": \"Laura Ajala QA\",\r\n  \"category\": \"Qualidade de Software\",\r\n  \"description\": \"Livro atualizado via Postman\",\r\n  \"total_copies\": 3\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/books/{{bookId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "books",
+            "{{bookId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "CT05 - Excluir livro",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const res = pm.response.json();\r",
+              "const idEsperado = Number(pm.collectionVariables.get(\"bookId\"));\r",
+              "const tituloEditado = pm.collectionVariables.get(\"bookTitle\") + \" - Editado\";\r",
+              "\r",
+              "pm.test(\"Status code é 200\", () => {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Mensagem de exclusão retornada\", () => {\r",
+              "    pm.expect(res.message).to.eql(\"Livro deletado com sucesso.\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Livro excluído é o livro correto\", () => {\r",
+              "    pm.expect(res.deletedBook.id).to.eql(idEsperado);\r",
+              "    pm.expect(res.deletedBook.author).to.eql(\"Laura Ajala QA\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Título excluído confirma que a atualização do CT04 foi persistida\", () => {\r",
+              "    pm.expect(res.deletedBook.title).to.eql(tituloEditado);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "{{tokenAdmin}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/books/{{bookId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "books",
+            "{{bookId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "CT06 - Buscar livro excluído",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const res = pm.response.json();\r",
+              "const idExcluido = Number(pm.collectionVariables.get(\"bookId\"));\r",
+              "\r",
+              "pm.test(\"Status code é 404\", () => {\r",
+              "    pm.response.to.have.status(404);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Mensagem de livro não encontrado\", () => {\r",
+              "    pm.expect(res.message).to.eql(\"Livro não encontrado.\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"API informa o ID que foi pesquisado\", () => {\r",
+              "    pm.expect(res.bookId).to.eql(idExcluido);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Nenhum dado do livro é retornado\", () => {\r",
+              "    pm.expect(res).to.not.have.property(\"book\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/books/{{bookId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "books",
+            "{{bookId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "CT07 - Cadastrar livro sem token",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const res = pm.response.json();\r",
+              "\r",
+              "pm.test(\"Status code é 401\", () => {\r",
+              "    pm.response.to.have.status(401);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Mensagem informa que o token é obrigatório\", () => {\r",
+              "    pm.expect(res.message).to.eql(\"Token de acesso necessário\");\r",
+              "    pm.expect(res.error).to.eql(\"MISSING_TOKEN\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Nenhum livro é criado sem autenticação\", () => {\r",
+              "    pm.expect(res).to.not.have.property(\"book\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"title\": \"Livro sem autenticação\",\r\n  \"author\": \"Laura Ajala QA\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/books",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "books"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "CT08 - Cadastrar livro com usuário comum",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const res = pm.response.json();\r",
+              "\r",
+              "pm.test(\"Status code é 403\", () => {\r",
+              "    pm.response.to.have.status(403);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Mensagem informa que apenas administradores podem cadastrar\", () => {\r",
+              "    pm.expect(res.message).to.eql(\"Acesso negado. Apenas administradores podem realizar esta ação.\");\r",
+              "    pm.expect(res.error).to.eql(\"ADMIN_REQUIRED\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"API identifica o perfil do usuário e o perfil exigido\", () => {\r",
+              "    pm.expect(res.userRole).to.eql(\"user\");\r",
+              "    pm.expect(res.requiredRole).to.eql(\"admin\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Nenhum livro é criado por usuário sem permissão\", () => {\r",
+              "    pm.expect(res).to.not.have.property(\"book\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "{{tokenUser}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"title\": \"Livro cadastrado por usuário comum\",\r\n  \"author\": \"Laura Ajala QA\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/books",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "books"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "CT09 - Cadastrar livro sem título",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const res = pm.response.json();\r",
+              "\r",
+              "pm.test(\"Status code é 400\", () => {\r",
+              "    pm.response.to.have.status(400);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"API indica que o campo title é obrigatório\", () => {\r",
+              "    pm.expect(res.field).to.eql(\"title\");\r",
+              "    pm.expect(res.message).to.include(\"required\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Nenhum livro é criado sem título\", () => {\r",
+              "    pm.expect(res).to.not.have.property(\"book\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "{{tokenAdmin}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"author\": \"Laura Ajala QA\",\r\n  \"category\": \"Tecnologia\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/books",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "books"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "CT10 - Cadastrar livro duplicado",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const res = pm.response.json();\r",
+              "const tituloExistente = pm.collectionVariables.get(\"existingTitle\");\r",
+              "const autorExistente = pm.collectionVariables.get(\"existingAuthor\");\r",
+              "\r",
+              "pm.test(\"Status code é 400\", () => {\r",
+              "    pm.response.to.have.status(400);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Mensagem informa que o livro já existe\", () => {\r",
+              "    pm.expect(res.message).to.eql(\"Já existe um livro com este título e autor.\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"API retorna os dados do livro já cadastrado\", () => {\r",
+              "    pm.expect(res.existingBook.title).to.eql(tituloExistente);\r",
+              "    pm.expect(res.existingBook.author).to.eql(autorExistente);\r",
+              "    pm.expect(res.existingBook.id).to.be.a(\"number\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Nenhum livro novo é criado\", () => {\r",
+              "    pm.expect(res).to.not.have.property(\"book\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "{{tokenAdmin}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"title\": \"{{existingTitle}}\",\r\n  \"author\": \"{{existingAuthor}}\",\r\n  \"category\": \"Tecnologia\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/books",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "books"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "CT11 - Buscar livro com ID inexistente",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const res = pm.response.json();\r",
+              "\r",
+              "pm.test(\"Status code é 404\", () => {\r",
+              "    pm.response.to.have.status(404);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Mensagem de livro não encontrado\", () => {\r",
+              "    pm.expect(res.message).to.eql(\"Livro não encontrado.\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"API informa o ID pesquisado\", () => {\r",
+              "    pm.expect(res.bookId).to.eql(99999);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Nenhum dado de livro é retornado\", () => {\r",
+              "    pm.expect(res).to.not.have.property(\"book\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/books/99999",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "books",
+            "99999"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": ""
+    },
+    {
+      "key": "tokenAdmin",
+      "value": ""
+    },
+    {
+      "key": "tokenUser",
+      "value": ""
+    },
+    {
+      "key": "bookId",
+      "value": ""
+    },
+    {
+      "key": "bookTitle",
+      "value": ""
+    },
+    {
+      "key": "existingTitle",
+      "value": ""
+    },
+    {
+      "key": "existingAuthor",
+      "value": ""
+    }
+  ]
+}
